@@ -1,0 +1,124 @@
+const assert=require('node:assert/strict');
+require('node:fs').mkdirSync('docs/screenshots',{recursive:true});
+const puppeteer=require('../.cache/browser/node_modules/puppeteer-core');
+const base=process.env.DEMO_URL||'http://127.0.0.1:8001';
+(async()=>{
+  const browser=await puppeteer.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true,args:['--no-proxy-server']});
+  try{
+    const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
+    await page.setViewport({width:1440,height:900});
+    await page.goto(base,{waitUntil:'networkidle0'});
+    assert.ok(await page.$('a[href="farmer.html"]'));
+    await page.evaluate(async()=>fetch('/api/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bureaus:3,villages_per_bureau:2,farmers_min:12,farmers_max:18,seed:20261022})}));
+    const original=await page.evaluate(()=>fetch('/api/state').then(r=>r.json()));
+    await page.click('a[href="farmer.html"]');
+    await page.waitForFunction(()=>document.querySelector('#start-role,.ending-sheet,#cash-envelope,.decision-desk'));
+    if(!await page.$('#start-role'))await page.click('#new-game');
+    await page.waitForSelector('#start-role');
+    await page.click('#key-open');await page.$eval('#game-key',el=>{el.value='test-only-key-toggle';});
+    await page.click('#toggle-game-key');assert.equal(await page.$eval('#game-key',el=>el.type),'text');
+    await page.click('#toggle-game-key');assert.equal(await page.$eval('#game-key',el=>el.type),'password');
+    await page.click('#toggle-game-key');await page.click('[data-close="key-dialog"]');
+    await page.click('#key-open');assert.equal(await page.$eval('#game-key',el=>el.type),'password');
+    assert.equal(await page.$eval('#game-key',el=>el.value),'test-only-key-toggle');
+    await page.click('[data-close="key-dialog"]');
+    assert.equal(await page.$$eval('[data-profile]',els=>els.length),6);
+    assert.equal(await page.$$eval('[data-role]',els=>els.length),3);
+    assert.equal(await page.$('input[type=number]'),null);
+    await page.$eval('#profile-age',el=>{el.value=25;el.dispatchEvent(new Event('input',{bubbles:true}));});
+    await page.$eval('#profile-skill',el=>{el.value=4;el.dispatchEvent(new Event('input',{bubbles:true}));});
+    await page.screenshot({path:'docs/screenshots/farmer-roster.png',fullPage:true});
+    await page.setViewport({width:375,height:812});await page.screenshot({path:'docs/screenshots/farmer-roster-mobile.png',fullPage:true});
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+    await page.setViewport({width:1440,height:900});
+    await page.click('#start-role');await page.waitForSelector('#cash-envelope');
+    await page.screenshot({path:'docs/screenshots/farmer-envelope.png'});
+    await page.click('#cash-envelope');
+    const game=await page.evaluate(()=>fetch('/api/farmer/state').then(r=>r.json()));
+    assert.ok(game.initial_cash_cny>=8000&&game.initial_cash_cny<=36000&&game.initial_cash_cny%1000===0);
+    assert.equal(game.player.age,25);assert.equal(game.player.skill,4);
+    await page.reload({waitUntil:'networkidle0'});await page.waitForSelector('#cash-envelope');await page.click('#cash-envelope');
+    const resumed=await page.evaluate(()=>fetch('/api/farmer/state').then(r=>r.json()));
+    assert.equal(resumed.initial_cash_cny,game.initial_cash_cny);assert.equal(resumed.run_id,game.run_id);
+    await page.click('#first-season');await page.waitForSelector('#choose-wait');
+    assert.equal(await page.$('.comparison-bars'),null);
+    const pending=await page.evaluate(()=>fetch('/api/farmer/state').then(r=>r.json()));
+    assert.ok(!JSON.stringify(pending).includes('p_adopt'));
+    await page.reload({waitUntil:'networkidle0'});await page.waitForSelector('#choose-wait');
+    await page.screenshot({path:'docs/screenshots/farmer-desk.png',fullPage:true});
+    await page.setViewport({width:375,height:812});await page.screenshot({path:'docs/screenshots/farmer-desk-mobile.png',fullPage:true});
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.setViewport({width:1440,height:900});
+    for(let season=1;season<=10;season++){
+      await page.click('#choose-wait');await page.waitForSelector('#choice-dialog[open]');
+      await page.type('#choice-reason',season===1?'先观察村里的变化。':'这一季仍想保留现金。');
+      await page.click('#confirm-choice');
+      if(season<10){await page.waitForSelector('#next-season');assert.ok(await page.$('.comparison-bars'));await page.click('#next-season');await page.waitForSelector('#choose-wait');}
+      else await page.waitForSelector('.ending-sheet');
+    }
+    await page.screenshot({path:'docs/screenshots/farmer-ending.png',fullPage:true});
+    const final=await page.evaluate(()=>fetch('/api/farmer/state').then(r=>r.json()));
+    assert.equal(final.stage,'finished');assert.equal(final.player.status,'uncommitted');
+    const history=await page.evaluate(()=>fetch('/api/farmer/history').then(r=>r.json()));
+    assert.equal(history.snapshots.length,11);
+    await page.waitForSelector('#basin-farmers .basin-table');
+    assert.ok(await page.$$eval('#basin-farmers tbody tr',els=>els.length)<=12);
+    assert.match(await page.$eval('#basin-farmer-count',el=>el.textContent),new RegExp(`共${original.metrics.basin.farmer_count}户`));
+    assert.equal(await page.$$eval('#basin-farmers .player-result',els=>els.length),1);
+    const basinLink=await page.$eval('.basin-open',el=>el.href);
+    assert.equal(new URLSearchParams(new URL(basinLink).hash.slice(1)).get('run'),final.run_id);
+    await page.select('#basin-village-filter',final.player.id.split('-F')[0]);
+    assert.ok(await page.$$eval('#basin-farmers tbody tr',els=>els.length)<original.metrics.basin.farmer_count);
+    await page.click('[data-basin-chart="credit"]');
+    assert.match(await page.$eval('#basin-charts',el=>el.textContent),/贷款/);
+    await page.$eval('#basin-outcome',el=>el.scrollIntoView());
+    await page.screenshot({path:'docs/screenshots/farmer-basin-outcome.png'});
+    const basinPage=await browser.newPage();await basinPage.goto(basinLink,{waitUntil:'networkidle0'});
+    await basinPage.waitForFunction(()=>document.querySelector('#round-label')?.textContent==='回放 第 10 季');
+    assert.equal(await basinPage.$eval('#tick-button',el=>el.disabled),true);await basinPage.close();
+    const farmerLink=await page.$eval('#basin-farmers .player-result a',el=>el.href);
+    const detailPage=await browser.newPage();await detailPage.goto(farmerLink,{waitUntil:'networkidle0'});
+    await detailPage.waitForFunction(()=>document.querySelector('#round-label')?.textContent==='回放 第 10 季');
+    assert.match(await detailPage.$eval('#inspector',el=>el.textContent),/用户在第/);
+    assert.ok(await detailPage.$$eval('.parcel',els=>els.length)>0);await detailPage.close();
+    await page.click('[data-replay="3"]');await page.waitForFunction(()=>!document.querySelector('#replay-controls').hidden);
+    assert.match(await page.$eval('#replay-label',el=>el.textContent),/第3季/);
+    await page.click('#back-live');await page.waitForSelector('.ending-sheet');
+    await page.click('#records-open');await page.waitForSelector('[data-record]');
+    await page.click('[data-close="records-dialog"]');
+    // New adoption defaults to automatic operation through the remaining seasons.
+    async function adoptedGame(automatic){
+      await page.click('#new-game');await page.waitForSelector('#start-role');
+      await page.click('#start-role');await page.waitForSelector('#cash-envelope');await page.click('#cash-envelope');
+      await page.click('#first-season');await page.waitForSelector('#choose-adopt:not([disabled])');
+      assert.equal(await page.$('#run-remaining'),null);
+      await page.click('#choose-adopt');
+      assert.equal(await page.$eval('#auto-after-adopt',el=>el.checked),true);
+      if(!automatic)await page.click('#auto-after-adopt');
+      await page.click('#confirm-choice');
+    }
+    await adoptedGame(true);await page.waitForSelector('.ending-sheet',{timeout:60000});
+    const auto=await page.evaluate(()=>fetch('/api/farmer/state').then(r=>r.json()));
+    assert.equal(auto.tick,10);assert.equal(auto.player.status,'operating');
+    const autoLog=await page.evaluate(()=>fetch('/api/farmer/history').then(r=>r.json()));
+    assert.equal(autoLog.snapshots.length,11);
+    // Stop finishes the current season, then the same button resumes the rest.
+    await adoptedGame(false);await page.waitForSelector('#run-remaining:not([disabled])');
+    let prepares=0;
+    const hold=req=>{if(req.url().endsWith('/api/farmer/prepare')&&req.method()==='POST'){prepares++;setTimeout(()=>req.continue(),250);}else req.continue();};
+    await page.setRequestInterception(true);page.on('request',hold);
+    await page.click('#run-remaining');await page.waitForSelector('#stop-remaining:not([hidden])');await page.click('#stop-remaining');
+    await page.waitForSelector('#run-remaining:not([disabled])',{timeout:30000});
+    assert.equal(prepares,1);
+    const stopped=await page.evaluate(()=>fetch('/api/farmer/state').then(r=>r.json()));assert.equal(stopped.tick,2);
+    page.off('request',hold);await page.setRequestInterception(false);
+    // A transport failure stops without starting another season.
+    const fail=req=>req.url().endsWith('/api/farmer/prepare')&&req.method()==='POST'?req.respond({status:503,contentType:'application/json',body:JSON.stringify({detail:'测试连接中断'})}):req.continue();
+    await page.setRequestInterception(true);page.on('request',fail);await page.click('#run-remaining');
+    await page.waitForSelector('#run-remaining:not([disabled])');assert.match(await page.$eval('#game-notice',el=>el.textContent),/测试连接中断/);
+    page.off('request',fail);await page.setRequestInterception(false);
+    await page.click('#run-remaining');await page.waitForSelector('.ending-sheet',{timeout:60000});
+    const full=await page.evaluate(()=>fetch('/api/state').then(r=>r.json()));assert.deepEqual(full,original);
+    assert.deepEqual(errors,[]);
+    console.log('Farmer UI passed: profile/cash, ten-season choices, basin outcomes and correct replay, adoption auto-run, stop/resume, network failure and full-simulation isolation.');
+  }finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});

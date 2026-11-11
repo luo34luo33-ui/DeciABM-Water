@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>水到田头，农户模拟</title>
+<meta name="description" content="扮演一位真实合成农户，在十季环境变化中选择安装节水设施或继续等待。">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/farmer.css">
+<script defer src="vendor/d3.min.js"></script><script type="module" src="js/farmer.js"></script>
+</head>
+<body><div class="story-shell">
+<header class="story-header"><a href="/" class="story-brand"><img src="assets/logo.svg" width="40" height="40" alt=""><span>水到田头<small>多主体节水决策AI仿真沙盒</small></span></a><nav aria-label="角色模式操作"><span id="game-mode">读取配置</span><button id="key-open">Key 设置</button><button id="records-open">我的卷宗</button><button id="new-game">新开一局</button><a href="/">返回首屏</a></nav></header>
+<main>
+<div id="game-notice" class="game-notice" role="status" hidden></div>
+<div id="game-progress" class="game-progress" role="status" hidden><span id="game-batch"></span><progress id="game-meter" max="1" value="0"></progress><span id="game-phase">读取本季卷宗</span><span id="game-count"></span><button id="stop-remaining" hidden>本季结束后停止</button></div>
+<div id="replay-controls" class="replay-controls" hidden><button id="replay-prev">上一季</button><span id="replay-label"></span><button id="replay-next">下一季</button><button id="back-live">返回我的当前状态</button></div>
+<div id="game-root"><section class="loading-sheet"><h1>打开田间卷宗</h1><p>正在读取角色与村庄。未确认身份前不会抽取现金。</p></section></div>
+</main>
+<footer class="story-footer"><span>合成身份与田块，所有账目来自仿真</span><span>一局十季，选择由你</span></footer>
+</div>
+<dialog id="key-dialog"><form id="key-form"><div class="dialog-heading"><h2>模型 Key</h2><button type="button" data-close="key-dialog">关闭</button></div><label for="game-key">OpenRouter Key</label><div class="key-input-row"><input id="game-key" type="password" autocomplete="off" placeholder="sk-or-v1-…"><button type="button" id="toggle-game-key" aria-controls="game-key" aria-label="显示Key" aria-pressed="false">显示</button></div><p>本局沿用全模拟已保存的运行方式。Key仅留在当前页面及请求中，刷新后需重新填写；离线模式无需Key。</p><button class="primary" type="submit">保存到本页</button></form></dialog>
+<dialog id="choice-dialog"><form id="choice-form"><div class="dialog-heading"><h2 id="choice-title">确认本季选择</h2><button type="button" data-close="choice-dialog">返回考虑</button></div><div id="choice-summary"></div><label>给这一季留句话（可选）<textarea id="choice-reason" rows="2" maxlength="500" placeholder="是什么影响了你的判断？"></textarea></label><label id="adopt-auto-option" class="check-option" hidden><input id="auto-after-adopt" type="checkbox" checked>采纳后自动运行剩余季，每季保存，可随时在本季结束后停止</label><p>提交后结算本季，再揭晓 Jev 的对照判断。</p><button id="confirm-choice" class="primary" type="submit">确认并结算本季</button></form></dialog>
+<dialog id="records-dialog"><div class="dialog-heading"><h2>我的卷宗</h2><button data-close="records-dialog">关闭</button></div><button id="export-game">导出当前查看的卷宗</button><div id="game-records"></div></dialog>
+<noscript><p>请启用 JavaScript 后进入角色体验。</p></noscript>
+</body></html>

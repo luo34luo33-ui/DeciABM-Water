@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="用Jev行为决策与LLM策略决策，探索农户、银行和水利部门如何共同影响节水采纳。">
+<title>多主体节水决策AI仿真沙盒</title><link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/landing.css"><script defer src="js/landing.js"></script>
+</head>
+<body><div class="landing-shell">
+<header class="landing-header"><a class="landing-brand" href="/"><img src="assets/logo.svg" alt="" class="landing-mark" width="42" height="42"><span>多主体节水决策AI仿真沙盒</span></a><a href="sandbox.html" class="quiet-link">进入沙盒</a></header>
+<main>
+<section class="landing-hero" aria-labelledby="hero-title">
+<div class="hero-copy"><h1 id="hero-title">从一户选择，<br>看见流域节水变化</h1>
+<p class="hero-description">扮演流域管理者，调整环境与政策情景，观察农户、农商行和地方水利部门如何共同改变节水设备采纳与区域用水。</p>
+<a id="start-simulation" class="start-button" href="sandbox.html">开始模拟</a><a class="farmer-entry" href="farmer.html">切换到农户模拟模式</a></div>
+<figure class="hero-art"><img src="assets/water-saving-farm.png" alt="黄绿色农田中的滴灌设备、农户、农村银行与水利部门概念插画" width="1536" height="1024" fetchpriority="high"></figure>
+</section>
+<section class="coupling-section" aria-labelledby="coupling-title">
+<div class="coupling-heading"><h2 id="coupling-title">两类决策引擎</h2><p>让每一户的选择，与政策和融资相互影响。</p></div>
+<div class="engine-flow" aria-label="Jev与LLM双层耦合决策机制">
+<article class="intro-card engine-card jev-card" data-reveal>
+<div class="engine-wordmark" aria-hidden="true">Jev</div>
+<h3>理解农户如何选择</h3><p class="card-description">结合农户画像、预期收益、融资条件与邻里影响，输出安装节水设施的采纳倾向，驱动大规模农户决策。</p>
+<div class="engine-facts"><span>画像与环境</span><span>采纳倾向 p / 1−p</span></div>
+<p class="card-outcome">行为决策引擎<span>结构化概率，逐户响应</span></p>
+</article>
+<article class="intro-card engine-card llm-card" data-reveal>
+<div class="engine-wordmark" aria-hidden="true">LLM</div>
+<h3>推演政策与信贷策略</h3><p class="card-description">由 DeepSeek 读取环境和经营结果，为农商行评估授信与利率，为地方水利局制定下一季水价与补贴。</p>
+<div class="engine-facts"><span>区域与经营信息</span><span>策略数值与中文依据</span></div>
+<p class="card-outcome">策略推理引擎<span>决策可读取，依据可追溯</span></p>
+</article>
+</div>
+</section>
+<section class="coupling-section collaboration-section" aria-labelledby="collaboration-title">
+<div class="coupling-heading"><h2 id="collaboration-title">三层主体协同</h2><p>从田头出发，连接信贷，再反馈到区域治理。</p></div>
+<div class="agent-flow" aria-label="农户、农商行、地方水利局的决策与反馈">
+<article class="intro-card agent-card" data-reveal>
+<span class="agent-number" aria-hidden="true">01</span><h3>农户</h3><p class="agent-question">这一季，要不要安装？</p>
+<p class="card-description">权衡家底、收益与风险；现金优先支付，融资缺口向本村银行申请贷款。</p>
+<p class="card-outcome">田头选择<span>安装、经营、用水与还贷</span></p>
+</article>
+<article class="intro-card agent-card" data-reveal>
+<span class="agent-number" aria-hidden="true">02</span><h3>农商行</h3><p class="agent-question">这笔贷款，能否偿还？</p>
+<p class="card-description">结合偿债能力、年龄与操作能力逐户审批，在可贷资金内确定授信与利率。</p>
+<p class="card-outcome">融资支持<span>贷款决定采纳能否落地</span></p>
+</article>
+<article class="intro-card agent-card" data-reveal>
+<span class="agent-number" aria-hidden="true">03</span><h3>地方水利局</h3><p class="agent-question">下一季，怎样推动节水？</p>
+<p class="card-description">读取本季用水与采纳结果，调整下季水价和补贴，并与其他地区开展配额互助。</p>
+<p class="card-outcome">区域反馈<span>新政策成为下一季的环境</span></p>
+</article>
+</div>
+<p class="feedback-note">每季结算现金、设备与用水，更新共同环境。你可以沿田块、决策记录与趋势曲线，回看整个反馈过程。</p>
+</section>
+</main>
+<footer class="landing-footer"><span>合成农户与空间，面向机制交流的 Toymodel</span><span>流域管理局由你扮演</span></footer>
+</div></body></html>

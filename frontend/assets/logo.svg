@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" role="img" aria-labelledby="title desc">
+  <title id="title">农业节水与智能决策标志</title>
+  <desc id="desc">透明背景的绿色水滴，内部为麦黄色脑形纹路，上方长出两片嫩叶。</desc>
+  <style>:root{--logo-ink:oklch(38% 0.10 135);--logo-water:oklch(94% 0.045 125);--logo-brain:oklch(87% 0.14 99);--logo-leaf:oklch(64% 0.15 130);--logo-leaf-light:oklch(78% 0.14 116)}.outline{stroke:var(--logo-ink);stroke-linecap:round;stroke-linejoin:round}.fold{fill:none;stroke:var(--logo-ink);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}</style>
+  <path class="outline" d="M40 11C34 20 18 32 13 44C7 61 21 75 40 75S73 61 67 44C62 32 46 20 40 11Z" fill="var(--logo-water)" stroke-width="3"/>
+  <path class="outline" d="M40 31C35 25 27 29 27 34C20 35 20 43 24 46C18 52 23 60 30 59C30 66 38 66 40 60C42 66 50 66 50 59C57 60 62 52 56 46C60 43 60 35 53 34C53 29 45 25 40 31Z" fill="var(--logo-brain)" stroke-width="2.4"/>
+  <path class="fold" d="M40 31V60M27 36C33 34 36 39 31 42M24 46C31 44 36 49 32 53M30 59C29 54 35 54 40 57M53 36C47 34 44 39 49 42M56 46C49 44 44 49 48 53M50 59C51 54 45 54 40 57"/>
+  <path class="outline" d="M40 20C31 20 24 15 22 6C32 6 39 10 40 20Z" fill="var(--logo-leaf-light)" stroke-width="2.3"/>
+  <path class="outline" d="M40 20C40 10 47 4 58 4C56 14 50 20 40 20Z" fill="var(--logo-leaf)" stroke-width="2.3"/>
+  <path class="fold" d="M31 12L40 20L50 11"/>
+</svg>

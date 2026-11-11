@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="本地运行的节水多智能体仿真工作台，探索水价、补贴与农村信贷如何影响农户采纳。">
+  <title>多主体节水决策AI仿真沙盒</title>
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <script defer src="vendor/d3.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+<div class="app-shell">
+  <header class="app-header">
+    <a class="brand" href="/" aria-label="返回介绍首屏"><img src="assets/logo.svg" class="brand-mark" alt="" width="42" height="42"><div><h1>多主体节水决策AI仿真沙盒</h1><p>流域政策、农村信贷与农户采纳</p></div></a>
+    <div class="header-actions"><span id="round-label" class="round-label">第 0 季</span><button id="key-open">Key 设置</button><button id="settings-open">环境设置</button><button id="setup-open">新建运行</button><button id="logs-open">运行记录</button></div>
+  </header>
+
+  <main>
+    <section class="command-bar" aria-label="仿真控制">
+      <label class="inline-field">场景<select id="scenario"><option value="baseline">基准</option><option value="drought">干旱</option><option value="redline">红线收紧</option><option value="credit">信贷收紧</option><option value="custom" hidden>自定义环境</option></select></label>
+      <label class="inline-field">运行方式<select id="mode"><option value="offline">离线规则</option><option value="online">在线模型</option></select></label>
+      <label class="inline-field">运行季数<select id="run-length"><option value="1">1 季</option><option value="5">5 季</option><option value="10">10 季</option></select></label>
+      <p id="environment-summary" class="environment-summary">正在读取环境…</p>
+      <button id="tick-button" class="primary">执行下一季</button>
+      <button id="stop-button" hidden>本季完成后停止</button>
+    </section>
+    <div id="notice" class="notice" role="status" hidden></div>
+    <div id="progress-region" class="progress-region" role="status" hidden><span id="batch-label"></span><span id="progress-label">准备执行</span><progress id="tick-progress" max="1" value="0" aria-label="本季模型决策进度"></progress><span id="progress-count"></span><span class="field-help">农户申请 → 银行授信 → Jev采纳 → 结算 → 地方局反馈</span></div>
+
+    <section class="metrics-strip" aria-label="当前范围指标">
+      <div><span id="scope-label">全流域</span><strong id="water-value">待计算</strong><span>本季用水 m³</span></div>
+      <div><span id="redline-status">用水考核</span><strong id="redline-value">待计算</strong><span>用水红线 m³</span></div>
+      <div><span id="adoption-caption">已运行设备</span><strong id="adoption-value">待计算</strong><span>安装面积占比</span></div>
+      <p class="model-note">农户申请、银行授信、Jev采纳<br>地方局据本季反馈制定下季政策</p>
+    </section>
+
+    <div class="workspace">
+      <section class="graph-panel" aria-label="可交互多智能体拓扑">
+        <div class="graph-toolbar"><nav id="breadcrumbs" aria-label="拓扑范围"><button data-action="home">全流域</button></nav><div class="view-tools"><button id="view-topology" class="selected" aria-pressed="true">拓扑</button><button id="view-atlas" aria-pressed="false">全流域田块</button><button id="view-parcels" aria-pressed="false" disabled>村庄田块</button><button id="zoom-out" aria-label="缩小拓扑">−</button><button id="zoom-in" aria-label="放大拓扑">＋</button><button id="zoom-fit">适应画布</button><button id="fullscreen">全屏</button></div></div>
+        <div id="atlas-controls" class="atlas-controls" hidden><label class="inline-field">地方局<select id="atlas-region"><option value="all">全部地方局</option></select></label><button id="focus-village" disabled>聚焦此村</button><span>单击查看农户，放大后显示编号</span></div>
+        <div class="layer-bar" role="group" aria-label="关系图层"><button data-layer="management" class="selected" aria-pressed="true">管理关系</button><button data-layer="credit" aria-pressed="false">信贷关系</button><button data-layer="quota" aria-pressed="false">配额互助</button><span id="space-caption">合成空间，非行政地图</span></div>
+        <div class="graph-stage"><svg id="topology" role="group" aria-label="节水多智能体关系图" viewBox="0 0 1000 440"></svg><p id="graph-empty" class="canvas-message" hidden></p></div>
+        <div class="graph-footer"><div class="legend"><span><i class="legend-uncommitted"></i>未承诺</span><span><i class="legend-pending"></i>待安装</span><span><i class="legend-operating"></i>运行中</span></div><span id="graph-hint">点击水利局或村庄聚焦，拖动与滚轮缩放</span></div>
+      </section>
+
+      <aside id="inspector" class="inspector" aria-label="Agent 决策详情" aria-live="polite"><div class="inspector-empty"><h2>读取仿真状态</h2><p>初始化后可点击节点，查看决策与经济数据。</p></div></aside>
+    </div>
+
+    <section class="analysis-panel" aria-label="仿真趋势与回放">
+      <div class="analysis-toolbar"><div class="chart-tabs" role="tablist" aria-label="趋势指标"><button role="tab" data-chart="water" aria-selected="true" class="selected">用水</button><button role="tab" data-chart="adoption" aria-selected="false">采纳</button><button role="tab" data-chart="policy" aria-selected="false">政策</button><button role="tab" data-chart="credit" aria-selected="false">信贷</button></div><span id="chart-scope">全流域</span><button id="export-button">导出本次运行</button></div>
+      <div id="charts" class="charts"><p>执行第一季后查看变化曲线。</p></div>
+      <div class="timeline"><button id="previous-tick" aria-label="查看上一季">上一季</button><label class="timeline-slider">轮次<input id="timeline" type="range" min="0" max="0" value="0" aria-label="选择回放季节"></label><span id="timeline-label">第 0 季</span><button id="next-tick" aria-label="查看下一季">下一季</button><button id="return-live">返回当前</button></div>
+    </section>
+    <footer class="app-footer"><span>合成农户与空间，结果用于机制演示</span><span id="run-source"></span></footer>
+  </main>
+</div>
+
+<dialog id="settings-dialog" aria-labelledby="settings-title">
+  <form id="settings-form">
+    <div class="dialog-head"><h2 id="settings-title">环境与运行设置</h2><button type="button" data-close="settings-dialog" aria-label="关闭设置">关闭</button></div>
+    <div class="form-grid"><label>供水减少 %<input id="drought" type="number" min="0" max="80" step="1"></label><label>红线 / 正常沟灌用水 %<input id="redline-ratio" type="number" min="10" max="150" step="1"></label><label>补贴预算倍数<input id="budget-multiplier" type="number" min="0" max="4" step="0.1"></label><label>新授信资金比例 %<input id="credit-factor" type="number" min="0" max="100" step="1"></label></div>
+    <label>流域管理局指示<textarea id="instruction" rows="3" maxlength="3000"></textarea></label>
+    <p class="field-help">保存后作用于下一季。水利局读取指示并选择水价与补贴，用户不直接替地方局决策。</p>
+    <p id="settings-error" class="form-error" role="alert"></p><div class="dialog-actions"><button type="submit" class="primary">保存设置</button></div>
+  </form>
+</dialog>
+
+<dialog id="key-dialog" aria-labelledby="key-title"><form id="key-form"><div class="dialog-head"><h2 id="key-title">模型 Key 设置</h2><button type="button" data-close="key-dialog">关闭</button></div><label for="api-key">OpenRouter Key</label><div class="key-input-row"><input id="api-key" type="password" autocomplete="off" placeholder="sk-or-v1-…"><button type="button" id="toggle-api-key" aria-controls="api-key" aria-label="显示Key" aria-pressed="false">显示</button></div><p class="field-help">仅留在本页内存及当前请求中，不保存到运行记录；离线模拟无需填写。</p><div class="dialog-actions"><button class="primary" type="submit">保存 Key</button></div></form></dialog>
+
+<dialog id="setup-dialog" aria-labelledby="setup-title"><form id="setup-form">
+  <div class="dialog-head"><h2 id="setup-title">新建运行</h2><button type="button" data-close="setup-dialog">关闭</button></div>
+  <div class="form-grid setup-sliders">
+    <label>地方水利局 <output for="setup-bureaus">3</output><input id="setup-bureaus" type="range" min="1" max="6" value="3"></label>
+    <label>每个水利局管辖村庄 <output for="setup-villages">2</output><input id="setup-villages" type="range" min="2" max="4" value="2"></label>
+    <label>每村户数下限 <output for="setup-min">12</output><input id="setup-min" type="range" min="12" max="18" value="12"></label>
+    <label>每村户数上限 <output for="setup-max">18</output><input id="setup-max" type="range" min="12" max="18" value="18"></label>
+    <label>初始现金系数 <output for="setup-cash-factor">65%</output><input id="setup-cash-factor" type="range" min="0.3" max="1.5" step="0.05" value="0.65"></label>
+  </div>
+  <p id="setup-summary" class="field-help"></p>
+  <label>随机种子<input id="setup-seed" type="number" min="0" max="2147483647" value="20261022"></label>
+  <div class="event-heading"><h3>10 季环境事件</h3><button type="button" id="preset-events">恢复预设</button></div>
+  <p class="field-help">勾选事件，调整起止季。每次执行会自动应用当季事件；同季多事件叠加，超过第10季后不再触发。</p>
+  <div id="event-list" class="event-list"></div>
+  <button type="button" id="add-event">新增事件</button>
+  <p id="setup-error" class="form-error" role="alert"></p>
+  <div class="dialog-actions"><button type="submit" id="new-run" class="primary">创建并进入第 0 季</button></div>
+  <p class="field-help">各村户数在范围内独立随机，旧运行保存在记录中。事件只作用于新建的运行。</p>
+</form></dialog>
+
+<dialog id="logs-dialog" aria-labelledby="logs-title"><div class="dialog-head"><h2 id="logs-title">运行记录</h2><button data-close="logs-dialog" aria-label="关闭运行记录">关闭</button></div><p>选择已保存运行，以只读方式回放拓扑、指标与原始决策。</p><div id="runs-list" class="runs-list"></div><label class="import-label">或打开导出的 JSON<input id="import-log" type="file" accept=".json,application/json"></label></dialog>
+<noscript><p class="noscript-message">工作台需要 JavaScript。请启用脚本后刷新；本地启动与模型说明见 demo/docs。</p></noscript>
+<div id="field-tooltip" class="field-tooltip" popover="manual" role="tooltip"></div>
+</body>
+</html>
